@@ -1,1 +1,49 @@
 "We built a carbon tracker that consumes less than 1% CPU and 15MB of RAM, ensuring the tracking doesn't contribute to the problem."
+Phase 1: The Transparent Window (Hello World)
+Goal: Create a borderless, transparent desktop window using C++ and webview.h that can float on top of other windows.
+What you will learn:
+How to compile a C++ project that links with macOS native libraries (Cocoa/WebKit).
+How to configure window properties in C++ (size, transparency, title-bar removal, and making it "always on top").
+Deliverable: A transparent window on your screen showing a simple "Hello World" text, which you can drag around.
+
+Phase 2: The Cute Pet UI (HTML, CSS, JS)
+Goal: Design the appearance and animations of your pet robot.
+What you will learn:
+CSS Keyframe Animations: How to make the pet bounce, blink, or float smoothly without using heavy JavaScript libraries.
+State Management: How to write simple JavaScript that changes the pet’s expression (e.g., Happy, Neutral, Sad, Panicking) depending on input values.
+Deliverable: A mock HTML page loaded in your C++ window featuring an animated pet that changes facial expressions when you click buttons on the screen.
+
+Phase 3: The C++ Power Tracker (Backend)
+Goal: Read your Mac’s actual CPU/GPU power consumption in C++.
+What you will learn:
+How to read macOS system metrics. On Mac, we will learn how to interface with Apple's IOKit library to query SMC (System Management Controller) sensors, or run lightweight background tasks to get CPU wattage.
+How to convert wattage and time into carbon emissions (grams of CO₂).
+Deliverable: A C++ console program that prints out your device's live energy consumption in real-time.
+Phase 4: The LLM API Token Tracker (The Proxy)
+Goal: Calculate the carbon cost of API-based LLMs (like OpenAI, Gemini) by intercepting calls.
+What you will learn:
+Socket Programming in C++: How to write a tiny, local HTTP server in C++ that acts as a proxy.
+How HTTP Proxies Work: You'll configure a python script or curl call to point to localhost:YOUR_PORT, parse the outgoing JSON for token counts, and forward it to the real API.
+Deliverable: The C++ backend detects whenever you run a coding agent or make an API call, counts the tokens, and estimates the datacenter carbon footprint.
+Phase 5: The Bridge (Connecting C++ and JavaScript)
+Goal: Send the live carbon data from your C++ backend to the HTML/JS frontend.
+What you will learn:
+Webview Bindings: How to expose a C++ function so that it can be called from JavaScript (window.py_bridge...).
+Event Loops: How to poll or push data continuously without freezing the UI.
+Deliverable: The floating pet now reacts in real-time! If your C++ tracker detects high GPU usage from a local LLM, the pet dynamically switches to a "sweating" or "panicked" animation.
+Phase 6: Health Reminders & Gamification (The Human Touch)
+Goal: Add wellness checks (water, stretching) and gamification rules.
+What you will learn:
+System Idle Detection: How to query macOS in C++ to see how long it has been since the user pressed a key or moved the mouse.
+Notification Systems: Showing speech bubbles over the pet when it's time to stretch.
+Deliverable: Your pet reminds you to drink water, sleeps when you step away from the keyboard, and gets happier when you take a screen break.
+Phase 7: Polish, Compile & Package
+Goal: Package your app into a standalone Mac .app application.
+What you will learn:
+How to compile everything into a single bundle with an icon, ready to run on startup.
+Deliverable: A polished, fully functional Carbon Footprint Desktop Pet app.
+How we start Phase 1:
+To start, we need to set up your Mac for C++ development and compile a basic window using webview.h.
+
+When you are ready, let me know, and I will guide you on how to download the libraries and write the build commands (no code files yet!).
+
