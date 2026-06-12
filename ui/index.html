@@ -24,8 +24,8 @@
             background: transparent;
             padding: 10px;
             text-align: center;
-            width: 220px;
-            height: 280px; /* Slightly taller for bubble */
+            width: 250px;
+            height: 350px; /* Taller to fit bubble */
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -36,25 +36,27 @@
         /* Speech Bubble */
         .speech-bubble {
             position: absolute;
-            top: 20px;
+            bottom: 170px; /* Fixed distance above the koala */
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 10px 14px;
+            border-radius: 18px;
+            padding: 12px 16px;
             color: #333;
             font-size: 0.85rem;
             font-weight: 600;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             opacity: 0;
-            transform: translateY(10px) scale(0.9);
+            transform: translateY(10px) scale(0.9) translateZ(30px);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             pointer-events: none;
-            max-width: 160px;
+            max-width: 180px;
             z-index: 10;
+            line-height: 1.4;
+            box-sizing: border-box;
         }
         
         .speech-bubble.visible {
             opacity: 1;
-            transform: translateY(0) scale(1);
+            transform: translateY(0) scale(1) translateZ(30px);
         }
 
         /* Speech Bubble tail */
@@ -77,6 +79,7 @@
             align-items: center;
             margin-bottom: 5px;
             margin-top: 20px;
+            transform: translateZ(20px);
         }
 
         .pet-avatar {
@@ -91,6 +94,24 @@
             cursor: grabbing;
         }
 
+        /* Particles */
+        .particle {
+            position: absolute;
+            font-size: 1.2rem;
+            pointer-events: none;
+            z-index: 5;
+            animation-fill-mode: forwards;
+        }
+        @keyframes floatParticle {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: translateY(-60px) scale(1.2); opacity: 0; }
+        }
+        @keyframes explodeParticle {
+            0% { transform: translate(0,0) scale(0.5); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(1.5); opacity: 0; }
+        }
+
         /* Animations */
         .anim-happy { animation: floatBounce 3s infinite ease-in-out; }
         .anim-stressed { animation: stressedShake 0.4s infinite ease-in-out; }
@@ -99,6 +120,15 @@
             filter: drop-shadow(0 0 10px rgba(255, 60, 60, 0.9));
         }
         .anim-sleeping { animation: sleepBreathe 4s infinite ease-in-out; }
+
+        @keyframes popTransition {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.6) rotate(10deg); filter: brightness(1.2); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .anim-pop {
+            animation: popTransition 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
         /* Sleep Zzz particles */
         .zzz {
@@ -120,6 +150,7 @@
             margin: 0;
             font-weight: 700;
             text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+            transform: translateZ(10px);
         }
         
         p {
@@ -129,6 +160,7 @@
             font-weight: 600;
             text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
             min-height: 20px;
+            transform: translateZ(10px);
         }
 
         .metrics {
@@ -141,6 +173,7 @@
             background: rgba(0, 0, 0, 0.4);
             padding: 4px 10px;
             border-radius: 12px;
+            transform: translateZ(10px);
         }
 
         /* Keyframes */
@@ -190,6 +223,7 @@
         const statusDesc = document.getElementById('statusDesc');
         const metricsBar = document.getElementById('metricsBar');
         const speechBubble = document.getElementById('speechBubble');
+        const container = document.querySelector('.container');
         
         let currentEmotion = '';
         let isSleeping = false;
@@ -233,12 +267,21 @@
             const state = states[emotion];
             if (!state) return;
             
-            petImg.classList.remove('anim-happy', 'anim-stressed', 'anim-overload', 'anim-sleeping');
+            // Pop transition sequence
+            petImg.classList.remove('anim-happy', 'anim-stressed', 'anim-overload', 'anim-sleeping', 'anim-pop');
             void petImg.offsetWidth; // trigger reflow
-            petImg.classList.add(state.animClass);
-            petImg.src = state.img;
-            statusTitle.innerText = state.title;
-            statusDesc.innerText = state.desc;
+            petImg.classList.add('anim-pop');
+            
+            setTimeout(() => {
+                petImg.src = state.img;
+                statusTitle.innerText = state.title;
+                statusDesc.innerText = state.desc;
+            }, 150); // Mid-way through the pop animation
+
+            setTimeout(() => {
+                petImg.classList.remove('anim-pop');
+                petImg.classList.add(state.animClass);
+            }, 400); // After pop finishes
         }
 
         function showBubble(text, durationMs = 5000) {
@@ -252,41 +295,69 @@
             }, durationMs);
         }
 
+        // Particle Spawner
+        function spawnParticle() {
+            if (isSleeping) return;
+            
+            const p = document.createElement('div');
+            p.className = 'particle';
+            
+            if (currentEmotion === 'happy') {
+                p.innerText = '🍃';
+                p.style.left = (20 + Math.random() * 60) + 'px';
+                p.style.top = (40 + Math.random() * 40) + 'px';
+                p.style.animation = 'floatParticle 2s ease-out';
+            } else if (currentEmotion === 'stressed') {
+                p.innerText = '⚡️';
+                p.style.left = (30 + Math.random() * 40) + 'px';
+                p.style.top = (20 + Math.random() * 40) + 'px';
+                p.style.animation = 'floatParticle 1.5s ease-out';
+            } else if (currentEmotion === 'overload') {
+                p.innerText = '💦';
+                p.style.left = '40px';
+                p.style.top = '40px';
+                const tx = (Math.random() - 0.5) * 80;
+                const ty = (Math.random() - 0.5) * 80 + 20;
+                p.style.setProperty('--tx', `${tx}px`);
+                p.style.setProperty('--ty', `${ty}px`);
+                p.style.animation = 'explodeParticle 0.6s ease-out';
+            } else {
+                return; // No particles for sleeping
+            }
+            
+            document.querySelector('.pet-container').appendChild(p);
+            setTimeout(() => p.remove(), 2000);
+        }
+        setInterval(spawnParticle, 800); // Check every 800ms
+
         // Gamification Logic
         function processGamification(idleSeconds) {
-            // Check if we just woke up from a long sleep
             if (isSleeping && idleSeconds < 5) {
                 isSleeping = false;
                 continuousActiveSeconds = 0;
                 showBubble("Welcome back! Thanks for taking a break! 🌿", 6000);
             }
 
-            // Check if we should go to sleep
             if (idleSeconds > IDLE_SLEEP_THRESHOLD) {
                 if (!isSleeping) {
                     isSleeping = true;
                     showBubble("Stepping away... Going to sleep to save power! 💤", 4000);
                 }
-                return 'sleeping'; // Force sleeping emotion
+                return 'sleeping';
             }
 
-            // If active, increment active time and check for reminders
             if (!isSleeping && idleSeconds < 5) {
                 continuousActiveSeconds++;
-                
-                // Reminders every X seconds
                 if (continuousActiveSeconds > 0 && continuousActiveSeconds % REMINDER_INTERVAL === 0) {
                     const reminders = [
                         "Time to stretch your legs! 🏃‍♂️",
                         "Don't forget to drink some water! 💧",
                         "Look away from the screen for 20 seconds! 👀"
                     ];
-                    const randomReminder = reminders[Math.floor(Math.random() * reminders.length)];
-                    showBubble(randomReminder, 8000);
+                    showBubble(reminders[Math.floor(Math.random() * reminders.length)], 8000);
                 }
             }
-            
-            return null; // Don't force an emotion
+            return null;
         }
 
         // Bridge function exposed to C++
@@ -297,13 +368,11 @@
             const co2Str = parseFloat(co2Grams).toFixed(5);
             metricsBar.innerText = `${wStr}W | ${co2Str}g CO₂`;
 
-            // Process gamification and see if it forces a state (like sleeping)
             let forcedEmotion = processGamification(idleSeconds || 0);
 
             if (forcedEmotion) {
                 setEmotion(forcedEmotion);
             } else {
-                // Default emotion logic based on power
                 if (watts > 8.0) {
                     setEmotion('overload');
                 } else if (watts > 3.0) {
