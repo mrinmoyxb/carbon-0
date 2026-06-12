@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,41 +8,65 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: rgba(0, 0, 0, 0);
-            /* Transparent background */
+            background-color: rgba(0, 0, 0, 0); /* Transparent background */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-end; /* Align bottom to leave room for bubble */
             height: 100vh;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-app-region: drag;
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.85);
-            /* Semi-transparent white card */
-            backdrop-filter: blur(12px);
-            /* Glassmorphism effect */
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 24px;
-            padding: 20px;
+            background: transparent;
+            padding: 10px;
             text-align: center;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
             width: 220px;
-            height: 280px;
+            height: 280px; /* Slightly taller for bubble */
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-end;
             align-items: center;
-            transition: all 0.3s ease;
+            position: relative;
         }
 
-        .container:hover {
-            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.25);
-            border-color: rgba(255, 255, 255, 0.6);
+        /* Speech Bubble */
+        .speech-bubble {
+            position: absolute;
+            top: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 10px 14px;
+            color: #333;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(10px) scale(0.9);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            max-width: 160px;
+            z-index: 10;
+        }
+        
+        .speech-bubble.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Speech Bubble tail */
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            margin-left: -10px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: rgba(255, 255, 255, 0.95) transparent transparent transparent;
         }
 
         .pet-container {
@@ -52,7 +75,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            margin-top: 20px;
         }
 
         .pet-avatar {
@@ -61,237 +85,241 @@
             object-fit: contain;
             cursor: grab;
             transition: transform 0.3s ease;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); /* Drop shadow to make it pop */
         }
-
         .pet-avatar:active {
             cursor: grabbing;
         }
 
         /* Animations */
-        .anim-happy {
-            animation: floatBounce 3s infinite ease-in-out;
-        }
-
-        .anim-stressed {
-            animation: stressedShake 0.4s infinite ease-in-out;
-        }
-
-        .anim-overload {
+        .anim-happy { animation: floatBounce 3s infinite ease-in-out; }
+        .anim-stressed { animation: stressedShake 0.4s infinite ease-in-out; }
+        .anim-overload { 
             animation: overloadJitter 0.1s infinite;
-            filter: drop-shadow(0 0 10px rgba(255, 60, 60, 0.7));
+            filter: drop-shadow(0 0 10px rgba(255, 60, 60, 0.9));
         }
-
-        .anim-sleeping {
-            animation: sleepBreathe 4s infinite ease-in-out;
-        }
+        .anim-sleeping { animation: sleepBreathe 4s infinite ease-in-out; }
 
         /* Sleep Zzz particles */
         .zzz {
             position: absolute;
-            top: 10px;
+            top: -10px;
             right: 10px;
-            font-size: 1.2rem;
-            color: #555;
+            font-size: 1.5rem;
+            color: #fff;
             font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             opacity: 0;
             pointer-events: none;
         }
-
-        .anim-sleeping~.zzz {
-            animation: floatZzz 3s infinite linear;
-        }
+        .anim-sleeping ~ .zzz { animation: floatZzz 3s infinite linear; }
 
         h1 {
             font-size: 1.15rem;
-            color: #1a1a1a;
-            margin: 4px 0;
-            font-weight: 600;
-        }
-
-        p {
-            font-size: 0.8rem;
-            color: #555555;
+            color: #fff;
             margin: 0;
-            font-weight: 400;
+            font-weight: 700;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+        }
+        
+        p {
+            font-size: 0.85rem;
+            color: #eee;
+            margin: 4px 0 0 0;
+            font-weight: 600;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
             min-height: 20px;
         }
 
-        /* Controls */
-        .controls {
-            margin-top: 15px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            width: 100%;
-        }
-
-        .btn {
-            background: rgba(240, 240, 240, 0.8);
-            border: 1px solid rgba(220, 220, 220, 0.8);
-            border-radius: 8px;
-            padding: 6px;
+        .metrics {
+            margin-top: 8px;
+            margin-bottom: 10px;
             font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .btn:hover {
-            background: rgba(220, 220, 220, 1);
-            transform: translateY(-1px);
-        }
-
-        .btn:active {
-            transform: translateY(1px);
+            color: #ffde59;
+            font-weight: 700;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 10px;
+            border-radius: 12px;
         }
 
         /* Keyframes */
         @keyframes floatBounce {
-
-            0%,
-            100% {
-                transform: translateY(0) scale(1);
-            }
-
-            50% {
-                transform: translateY(-10px) scale(1.02);
-            }
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.02); }
         }
-
         @keyframes stressedShake {
-
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            25% {
-                transform: translateX(-3px) rotate(-3deg);
-            }
-
-            75% {
-                transform: translateX(3px) rotate(3deg);
-            }
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px) rotate(-3deg); }
+            75% { transform: translateX(3px) rotate(3deg); }
         }
-
         @keyframes overloadJitter {
-            0% {
-                transform: translate(0, 0) scale(1.05);
-            }
-
-            25% {
-                transform: translate(-3px, 3px) scale(1.05);
-            }
-
-            50% {
-                transform: translate(3px, -3px) scale(1.05);
-            }
-
-            75% {
-                transform: translate(-3px, -3px) scale(1.05);
-            }
-
-            100% {
-                transform: translate(3px, 3px) scale(1.05);
-            }
+            0% { transform: translate(0, 0) scale(1.05); }
+            25% { transform: translate(-3px, 3px) scale(1.05); }
+            50% { transform: translate(3px, -3px) scale(1.05); }
+            75% { transform: translate(-3px, -3px) scale(1.05); }
+            100% { transform: translate(3px, 3px) scale(1.05); }
         }
-
         @keyframes sleepBreathe {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.05) translateY(3px);
-            }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05) translateY(3px); }
         }
-
         @keyframes floatZzz {
-            0% {
-                opacity: 0;
-                transform: translate(0, 0) scale(0.5);
-            }
-
-            20% {
-                opacity: 1;
-            }
-
-            80% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0;
-                transform: translate(20px, -40px) scale(1.2);
-            }
+            0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translate(20px, -40px) scale(1.2); }
         }
     </style>
 </head>
-
 <body>
     <div class="container">
+        <div id="speechBubble" class="speech-bubble">Hello!</div>
         <div class="pet-container">
-            <img id="petImg" class="pet-avatar anim-happy" src="assets/happy.png" alt="Koala Pet"
-                onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'50\' font-size=\'40\'>🐨</text></svg>'">
+            <img id="petImg" class="pet-avatar anim-happy" src="assets/happy.png" alt="Koala Pet" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'50\' font-size=\'40\'>🐨</text></svg>'">
             <div class="zzz">Z</div>
         </div>
-        <h1>Carbon Pet</h1>
-        <p id="statusText">I'm floating on your desktop!</p>
-
-        <div class="controls">
-            <button class="btn" onclick="setEmotion('happy')">Happy</button>
-            <button class="btn" onclick="setEmotion('stressed')">Stressed</button>
-            <button class="btn" onclick="setEmotion('overload')">Overload</button>
-            <button class="btn" onclick="setEmotion('sleeping')">Sleeping</button>
-        </div>
+        <h1 id="statusTitle">Carbon Pet</h1>
+        <p id="statusDesc">Warming up sensors...</p>
+        <div id="metricsBar" class="metrics" style="display:none;">0W | 0g CO₂</div>
     </div>
 
     <script>
         const petImg = document.getElementById('petImg');
-        const statusText = document.getElementById('statusText');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusDesc = document.getElementById('statusDesc');
+        const metricsBar = document.getElementById('metricsBar');
+        const speechBubble = document.getElementById('speechBubble');
+        
+        let currentEmotion = '';
+        let isSleeping = false;
+        let continuousActiveSeconds = 0;
+        let bubbleTimeout = null;
+
+        const IDLE_SLEEP_THRESHOLD = 60; // 1 minute (for testing)
+        const REMINDER_INTERVAL = 600;   // 10 minutes (for testing)
 
         const states = {
             happy: {
                 img: 'assets/happy.png',
                 animClass: 'anim-happy',
-                text: "I'm floating on your desktop!"
+                title: "All Good!",
+                desc: "Low power mode"
             },
             stressed: {
                 img: 'assets/stressed.png',
                 animClass: 'anim-stressed',
-                text: "CPU is getting warm..."
+                title: "Working Hard!",
+                desc: "CPU getting warm"
             },
             overload: {
                 img: 'assets/overload.png',
                 animClass: 'anim-overload',
-                text: "Too many tokens! Aaah!"
+                title: "Overload!!",
+                desc: "Too many tokens!"
             },
             sleeping: {
                 img: 'assets/sleeping.png',
                 animClass: 'anim-sleeping',
-                text: "Idle... zzz..."
+                title: "Zzz...",
+                desc: "System idle"
             }
         };
 
         function setEmotion(emotion) {
+            if (currentEmotion === emotion) return;
+            currentEmotion = emotion;
+
             const state = states[emotion];
             if (!state) return;
-
-            // Remove old animations
+            
             petImg.classList.remove('anim-happy', 'anim-stressed', 'anim-overload', 'anim-sleeping');
-
-            // Trigger reflow to restart animation if needed
-            void petImg.offsetWidth;
-
-            // Add new class and image
+            void petImg.offsetWidth; // trigger reflow
             petImg.classList.add(state.animClass);
             petImg.src = state.img;
-            statusText.innerText = state.text;
+            statusTitle.innerText = state.title;
+            statusDesc.innerText = state.desc;
         }
+
+        function showBubble(text, durationMs = 5000) {
+            speechBubble.innerText = text;
+            speechBubble.classList.add('visible');
+            
+            if (bubbleTimeout) clearTimeout(bubbleTimeout);
+            
+            bubbleTimeout = setTimeout(() => {
+                speechBubble.classList.remove('visible');
+            }, durationMs);
+        }
+
+        // Gamification Logic
+        function processGamification(idleSeconds) {
+            // Check if we just woke up from a long sleep
+            if (isSleeping && idleSeconds < 5) {
+                isSleeping = false;
+                continuousActiveSeconds = 0;
+                showBubble("Welcome back! Thanks for taking a break! 🌿", 6000);
+            }
+
+            // Check if we should go to sleep
+            if (idleSeconds > IDLE_SLEEP_THRESHOLD) {
+                if (!isSleeping) {
+                    isSleeping = true;
+                    showBubble("Stepping away... Going to sleep to save power! 💤", 4000);
+                }
+                return 'sleeping'; // Force sleeping emotion
+            }
+
+            // If active, increment active time and check for reminders
+            if (!isSleeping && idleSeconds < 5) {
+                continuousActiveSeconds++;
+                
+                // Reminders every X seconds
+                if (continuousActiveSeconds > 0 && continuousActiveSeconds % REMINDER_INTERVAL === 0) {
+                    const reminders = [
+                        "Time to stretch your legs! 🏃‍♂️",
+                        "Don't forget to drink some water! 💧",
+                        "Look away from the screen for 20 seconds! 👀"
+                    ];
+                    const randomReminder = reminders[Math.floor(Math.random() * reminders.length)];
+                    showBubble(randomReminder, 8000);
+                }
+            }
+            
+            return null; // Don't force an emotion
+        }
+
+        // Bridge function exposed to C++
+        window.updateMetrics = function(watts, co2Grams, idleSeconds) {
+            metricsBar.style.display = 'block';
+            
+            const wStr = parseFloat(watts).toFixed(1);
+            const co2Str = parseFloat(co2Grams).toFixed(5);
+            metricsBar.innerText = `${wStr}W | ${co2Str}g CO₂`;
+
+            // Process gamification and see if it forces a state (like sleeping)
+            let forcedEmotion = processGamification(idleSeconds || 0);
+
+            if (forcedEmotion) {
+                setEmotion(forcedEmotion);
+            } else {
+                // Default emotion logic based on power
+                if (watts > 8.0) {
+                    setEmotion('overload');
+                } else if (watts > 3.0) {
+                    setEmotion('stressed');
+                } else {
+                    setEmotion('happy');
+                }
+            }
+        };
+
+        // Make window draggable via C++ bridge
+        window.addEventListener('mousedown', (e) => {
+            if (e.button === 0 && window.startWindowDrag) {
+                window.startWindowDrag("");
+            }
+        });
     </script>
 </body>
-
 </html>

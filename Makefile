@@ -1,6 +1,6 @@
 CXX = clang++
 CXXFLAGS = -std=c++14 -O2
-FRAMEWORKS = -framework Cocoa -framework WebKit
+FRAMEWORKS = -framework Cocoa -framework WebKit -framework ApplicationServices
 
 all: build/carbon_pet build/power_tracker
 

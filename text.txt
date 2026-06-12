@@ -40,6 +40,7 @@ What you will learn:
 System Idle Detection: How to query macOS in C++ to see how long it has been since the user pressed a key or moved the mouse.
 Notification Systems: Showing speech bubbles over the pet when it's time to stretch.
 Deliverable: Your pet reminds you to drink water, sleeps when you step away from the keyboard, and gets happier when you take a screen break.
+
 Phase 7: Polish, Compile & Package
 Goal: Package your app into a standalone Mac .app application.
 What you will learn:
