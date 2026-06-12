@@ -27,8 +27,8 @@
             padding: 20px;
             text-align: center;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
-            width: 200px;
-            height: 200px;
+            width: 220px;
+            height: 280px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -39,18 +39,65 @@
             box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.25);
             border-color: rgba(255, 255, 255, 0.6);
         }
+        
+        .pet-container {
+            position: relative;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
         .pet-avatar {
-            font-size: 4.5rem;
-            animation: idleBounce 2s infinite ease-in-out;
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
             cursor: grab;
+            transition: transform 0.3s ease;
         }
         .pet-avatar:active {
             cursor: grabbing;
         }
+
+        /* Animations */
+        .anim-happy {
+            animation: floatBounce 3s infinite ease-in-out;
+        }
+        
+        .anim-stressed {
+            animation: stressedShake 0.4s infinite ease-in-out;
+        }
+        
+        .anim-overload {
+            animation: overloadJitter 0.1s infinite;
+            filter: drop-shadow(0 0 10px rgba(255, 60, 60, 0.7));
+        }
+        
+        .anim-sleeping {
+            animation: sleepBreathe 4s infinite ease-in-out;
+        }
+
+        /* Sleep Zzz particles */
+        .zzz {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.2rem;
+            color: #555;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .anim-sleeping ~ .zzz {
+            animation: floatZzz 3s infinite linear;
+        }
+
         h1 {
             font-size: 1.15rem;
             color: #1a1a1a;
-            margin: 12px 0 4px 0;
+            margin: 4px 0;
             font-weight: 600;
         }
         p {
@@ -58,22 +105,129 @@
             color: #555555;
             margin: 0;
             font-weight: 400;
+            min-height: 20px;
         }
-        @keyframes idleBounce {
-            0%, 100% {
-                transform: translateY(0) scale(1);
-            }
-            50% {
-                transform: translateY(-8px) scale(1.02);
-            }
+
+        /* Controls */
+        .controls {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .btn {
+            background: rgba(240, 240, 240, 0.8);
+            border: 1px solid rgba(220, 220, 220, 0.8);
+            border-radius: 8px;
+            padding: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #333;
+            font-weight: 500;
+        }
+        .btn:hover {
+            background: rgba(220, 220, 220, 1);
+            transform: translateY(-1px);
+        }
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Keyframes */
+        @keyframes floatBounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.02); }
+        }
+        
+        @keyframes stressedShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px) rotate(-3deg); }
+            75% { transform: translateX(3px) rotate(3deg); }
+        }
+        
+        @keyframes overloadJitter {
+            0% { transform: translate(0, 0) scale(1.05); }
+            25% { transform: translate(-3px, 3px) scale(1.05); }
+            50% { transform: translate(3px, -3px) scale(1.05); }
+            75% { transform: translate(-3px, -3px) scale(1.05); }
+            100% { transform: translate(3px, 3px) scale(1.05); }
+        }
+        
+        @keyframes sleepBreathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05) translateY(3px); }
+        }
+        
+        @keyframes floatZzz {
+            0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translate(20px, -40px) scale(1.2); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="pet-avatar">🤖</div>
+        <div class="pet-container">
+            <img id="petImg" class="pet-avatar anim-happy" src="assets/happy.png" alt="Koala Pet" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'50\' font-size=\'40\'>🐨</text></svg>'">
+            <div class="zzz">Z</div>
+        </div>
         <h1>Carbon Pet</h1>
-        <p>I'm floating on your desktop!</p>
+        <p id="statusText">I'm floating on your desktop!</p>
+        
+        <div class="controls">
+            <button class="btn" onclick="setEmotion('happy')">Happy</button>
+            <button class="btn" onclick="setEmotion('stressed')">Stressed</button>
+            <button class="btn" onclick="setEmotion('overload')">Overload</button>
+            <button class="btn" onclick="setEmotion('sleeping')">Sleeping</button>
+        </div>
     </div>
+
+    <script>
+        const petImg = document.getElementById('petImg');
+        const statusText = document.getElementById('statusText');
+        
+        const states = {
+            happy: {
+                img: 'assets/happy.png',
+                animClass: 'anim-happy',
+                text: "I'm floating on your desktop!"
+            },
+            stressed: {
+                img: 'assets/stressed.png',
+                animClass: 'anim-stressed',
+                text: "CPU is getting warm..."
+            },
+            overload: {
+                img: 'assets/overload.png',
+                animClass: 'anim-overload',
+                text: "Too many tokens! Aaah!"
+            },
+            sleeping: {
+                img: 'assets/sleeping.png',
+                animClass: 'anim-sleeping',
+                text: "Idle... zzz..."
+            }
+        };
+
+        function setEmotion(emotion) {
+            const state = states[emotion];
+            if (!state) return;
+            
+            // Remove old animations
+            petImg.classList.remove('anim-happy', 'anim-stressed', 'anim-overload', 'anim-sleeping');
+            
+            // Trigger reflow to restart animation if needed
+            void petImg.offsetWidth;
+            
+            // Add new class and image
+            petImg.classList.add(state.animClass);
+            petImg.src = state.img;
+            statusText.innerText = state.text;
+        }
+    </script>
 </body>
 </html>

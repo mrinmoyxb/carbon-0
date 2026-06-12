@@ -19,6 +19,7 @@ What you will learn:
 How to read macOS system metrics. On Mac, we will learn how to interface with Apple's IOKit library to query SMC (System Management Controller) sensors, or run lightweight background tasks to get CPU wattage.
 How to convert wattage and time into carbon emissions (grams of CO₂).
 Deliverable: A C++ console program that prints out your device's live energy consumption in real-time.
+
 Phase 4: The LLM API Token Tracker (The Proxy)
 Goal: Calculate the carbon cost of API-based LLMs (like OpenAI, Gemini) by intercepting calls.
 What you will learn:
