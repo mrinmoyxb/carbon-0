@@ -35,6 +35,7 @@
 #include <atomic>
 #include <utility>
 #include <cctype>
+#include <cstdlib>
 
 // POSIX sockets
 #include <sys/socket.h>
@@ -78,6 +79,8 @@ static const double CARBON_INTENSITY_G_PER_KWH = 400.0;
 struct RequestLog {
     std::string timestamp;
     std::string model;
+    std::string provider_host;
+    std::string path;
     int prompt_tokens      = 0;
     int completion_tokens  = 0;
     int total_tokens       = 0;
@@ -114,12 +117,32 @@ struct HttpMessage {
     }
 };
 
+struct UsageCounts {
+    int prompt_tokens     = 0;
+    int completion_tokens = 0;
+    int total_tokens      = 0;
+    bool found            = false;
+};
+
 // ─── Globals ────────────────────────────────────────────────────────────────
 
 static std::mutex        g_stats_mutex;
 static ProxyStats        g_stats;
 static std::atomic<bool> g_running(true);
 static int               g_server_fd = -1;
+
+int configuredPort() {
+    const char* env_port = std::getenv("CARBON_PROXY_PORT");
+    if (!env_port || !*env_port) return PROXY_PORT;
+
+    try {
+        int port = std::stoi(env_port);
+        if (port > 0 && port < 65536) return port;
+    } catch (...) {
+    }
+
+    return PROXY_PORT;
+}
 
 // ─── Signal Handler ─────────────────────────────────────────────────────────
 
@@ -184,6 +207,71 @@ std::string extractJsonString(const std::string& json, const std::string& key) {
         pos++;
     }
     return result;
+}
+
+std::string jsonEscape(const std::string& value) {
+    std::ostringstream oss;
+    for (unsigned char ch : value) {
+        switch (ch) {
+            case '"':  oss << "\\\""; break;
+            case '\\': oss << "\\\\"; break;
+            case '\b': oss << "\\b";  break;
+            case '\f': oss << "\\f";  break;
+            case '\n': oss << "\\n";  break;
+            case '\r': oss << "\\r";  break;
+            case '\t': oss << "\\t";  break;
+            default:
+                if (ch < 0x20) {
+                    oss << "\\u" << std::hex << std::setw(4) << std::setfill('0')
+                        << static_cast<int>(ch) << std::dec << std::setfill(' ');
+                } else {
+                    oss << static_cast<char>(ch);
+                }
+        }
+    }
+    return oss.str();
+}
+
+int firstPositiveJsonInt(const std::string& json, const std::vector<std::string>& keys) {
+    for (const auto& key : keys) {
+        int value = extractJsonInt(json, key);
+        if (value >= 0) return value;
+    }
+    return -1;
+}
+
+UsageCounts extractUsageCounts(const std::string& response_body) {
+    UsageCounts usage;
+
+    size_t usage_pos = response_body.find("\"usage\"");
+    if (usage_pos == std::string::npos) return usage;
+
+    usage.found = true;
+    std::string usage_section = response_body.substr(usage_pos);
+
+    int prompt = firstPositiveJsonInt(usage_section, {
+        "prompt_tokens",
+        "input_tokens",
+        "input_token_count"
+    });
+
+    int completion = firstPositiveJsonInt(usage_section, {
+        "completion_tokens",
+        "output_tokens",
+        "generated_tokens",
+        "output_token_count"
+    });
+
+    int total = firstPositiveJsonInt(usage_section, {
+        "total_tokens",
+        "total_token_count"
+    });
+
+    usage.prompt_tokens     = std::max(0, prompt);
+    usage.completion_tokens = std::max(0, completion);
+    usage.total_tokens      = total > 0 ? total : usage.prompt_tokens + usage.completion_tokens;
+
+    return usage;
 }
 
 // ─── HTTP Parsing ───────────────────────────────────────────────────────────
@@ -458,13 +546,17 @@ std::string buildStatsJson() {
     oss << "  \"total_tokens\": "            << g_stats.total_tokens            << ",\n";
     oss << "  \"total_co2_grams\": "         << g_stats.total_co2_grams        << ",\n";
     oss << "  \"total_energy_wh\": "         << g_stats.total_energy_wh        << ",\n";
+    oss << "  \"energy_per_1k_tokens_wh\": " << ENERGY_PER_1K_TOKENS_WH        << ",\n";
+    oss << "  \"carbon_intensity_g_per_kwh\": " << CARBON_INTENSITY_G_PER_KWH    << ",\n";
     oss << "  \"requests\": [\n";
 
     for (size_t i = 0; i < g_stats.logs.size(); ++i) {
         const auto& log = g_stats.logs[i];
         oss << "    {\n";
-        oss << "      \"timestamp\": \""         << log.timestamp        << "\",\n";
-        oss << "      \"model\": \""             << log.model            << "\",\n";
+        oss << "      \"timestamp\": \""         << jsonEscape(log.timestamp)     << "\",\n";
+        oss << "      \"provider_host\": \""     << jsonEscape(log.provider_host) << "\",\n";
+        oss << "      \"path\": \""              << jsonEscape(log.path)          << "\",\n";
+        oss << "      \"model\": \""             << jsonEscape(log.model)         << "\",\n";
         oss << "      \"prompt_tokens\": "       << log.prompt_tokens    << ",\n";
         oss << "      \"completion_tokens\": "   << log.completion_tokens << ",\n";
         oss << "      \"total_tokens\": "        << log.total_tokens     << ",\n";
@@ -477,6 +569,11 @@ std::string buildStatsJson() {
     oss << "}\n";
 
     return oss.str();
+}
+
+void resetStats() {
+    std::lock_guard<std::mutex> lock(g_stats_mutex);
+    g_stats = ProxyStats{};
 }
 
 // ─── Send HTTP Response to Client ───────────────────────────────────────────
@@ -512,6 +609,21 @@ void handleClient(int client_fd) {
     if (req.method == "GET" && req.path == "/stats") {
         std::string json = buildStatsJson();
         sendResponse(client_fd, 200, "OK", "application/json", json);
+        close(client_fd);
+        return;
+    }
+
+    // ── /health endpoint ────────────────────────────────────────────────
+    if (req.method == "GET" && req.path == "/health") {
+        sendResponse(client_fd, 200, "OK", "application/json", "{\"status\":\"ok\"}\n");
+        close(client_fd);
+        return;
+    }
+
+    // ── /stats/reset endpoint ───────────────────────────────────────────
+    if (req.method == "POST" && req.path == "/stats/reset") {
+        resetStats();
+        sendResponse(client_fd, 200, "OK", "application/json", "{\"status\":\"reset\"}\n");
         close(client_fd);
         return;
     }
@@ -596,22 +708,13 @@ void handleClient(int client_fd) {
         }
     }
 
-    // Look for the "usage" object in the JSON response
-    size_t usage_pos = resp_body.find("\"usage\"");
     std::string model_name = extractJsonString(resp_body, "model");
+    if (model_name.empty()) model_name = extractJsonString(req.body, "model");
 
-    int prompt_tokens = 0, completion_tokens = 0, total_tokens = 0;
-
-    if (usage_pos != std::string::npos) {
-        std::string usage_section = resp_body.substr(usage_pos);
-        prompt_tokens     = extractJsonInt(usage_section, "prompt_tokens");
-        completion_tokens = extractJsonInt(usage_section, "completion_tokens");
-        total_tokens      = extractJsonInt(usage_section, "total_tokens");
-
-        if (prompt_tokens < 0)     prompt_tokens     = 0;
-        if (completion_tokens < 0) completion_tokens = 0;
-        if (total_tokens <= 0)     total_tokens = prompt_tokens + completion_tokens;
-    }
+    UsageCounts usage = extractUsageCounts(resp_body);
+    int prompt_tokens     = usage.prompt_tokens;
+    int completion_tokens = usage.completion_tokens;
+    int total_tokens      = usage.total_tokens;
 
     // ── Carbon footprint estimation ──────────────────────────────────────
     // Energy (Wh) = (total_tokens / 1000) × ENERGY_PER_1K_TOKENS_WH
@@ -632,6 +735,8 @@ void handleClient(int client_fd) {
         RequestLog log;
         log.timestamp         = getCurrentTimestamp();
         log.model             = model_name;
+        log.provider_host     = forward_host;
+        log.path              = req.path;
         log.prompt_tokens     = prompt_tokens;
         log.completion_tokens = completion_tokens;
         log.total_tokens      = total_tokens;
@@ -644,6 +749,8 @@ void handleClient(int client_fd) {
     std::cout << CLR_GREEN << "  ✓ " << CLR_RESET;
     if (!model_name.empty())
         std::cout << CLR_BOLD << model_name << CLR_RESET << " | ";
+    if (!usage.found)
+        std::cout << CLR_YELLOW << "No usage block returned | " << CLR_RESET;
     std::cout << CLR_CYAN << "Tokens: " << total_tokens
               << CLR_DIM << " (prompt:" << prompt_tokens
               << " + completion:" << completion_tokens << ")" << CLR_RESET
@@ -672,6 +779,8 @@ int main() {
     signal(SIGTERM, signalHandler);
     signal(SIGPIPE, SIG_IGN); // Ignore broken pipe from disconnected clients
 
+    int proxy_port = configuredPort();
+
     // Create server socket
     g_server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (g_server_fd < 0) {
@@ -685,10 +794,10 @@ int main() {
     struct sockaddr_in addr = {};
     addr.sin_family      = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // localhost only — safe
-    addr.sin_port        = htons(PROXY_PORT);
+    addr.sin_port        = htons(proxy_port);
 
     if (bind(g_server_fd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
-        std::cerr << CLR_RED << "Failed to bind to port " << PROXY_PORT
+        std::cerr << CLR_RED << "Failed to bind to port " << proxy_port
                   << " — is another instance running?" << CLR_RESET << std::endl;
         close(g_server_fd);
         return 1;
@@ -704,10 +813,12 @@ int main() {
     std::cout << std::endl;
     std::cout << CLR_LEAF  << "  🌿 Carbon Token Proxy"                                << CLR_RESET << std::endl;
     std::cout << CLR_DIM   << "  ────────────────────────────────────────"              << CLR_RESET << std::endl;
-    std::cout << CLR_CYAN  << "  Listening on " << CLR_BOLD << "http://localhost:" << PROXY_PORT << CLR_RESET << std::endl;
-    std::cout << CLR_DIM   << "  Stats:       http://localhost:" << PROXY_PORT << "/stats"   << CLR_RESET << std::endl;
+    std::cout << CLR_CYAN  << "  Listening on " << CLR_BOLD << "http://localhost:" << proxy_port << CLR_RESET << std::endl;
+    std::cout << CLR_DIM   << "  Stats:       http://localhost:" << proxy_port << "/stats"   << CLR_RESET << std::endl;
+    std::cout << CLR_DIM   << "  Health:      http://localhost:" << proxy_port << "/health"  << CLR_RESET << std::endl;
     std::cout << CLR_DIM   << "  ────────────────────────────────────────"              << CLR_RESET << std::endl;
     std::cout << CLR_DIM   << "  Set X-Forward-Host header to target API"              << CLR_RESET << std::endl;
+    std::cout << CLR_DIM   << "  Optional: CARBON_PROXY_PORT=" << proxy_port << " overrides the port" << CLR_RESET << std::endl;
     std::cout << CLR_DIM   << "  Press Ctrl+C to stop"                                 << CLR_RESET << std::endl;
     std::cout << std::endl;
 
