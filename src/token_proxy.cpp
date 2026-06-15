@@ -78,6 +78,7 @@ static const double CARBON_INTENSITY_G_PER_KWH = 400.0;
 
 struct RequestLog {
     std::string timestamp;
+    std::string source;
     std::string model;
     std::string provider_host;
     std::string path;
@@ -272,6 +273,42 @@ UsageCounts extractUsageCounts(const std::string& response_body) {
     usage.total_tokens      = total > 0 ? total : usage.prompt_tokens + usage.completion_tokens;
 
     return usage;
+}
+
+void recordUsage(const std::string& source,
+                 const std::string& model,
+                 const std::string& provider_host,
+                 const std::string& path,
+                 int prompt_tokens,
+                 int completion_tokens,
+                 int total_tokens) {
+    if (prompt_tokens < 0) prompt_tokens = 0;
+    if (completion_tokens < 0) completion_tokens = 0;
+    if (total_tokens <= 0) total_tokens = prompt_tokens + completion_tokens;
+
+    double energy_wh = (total_tokens / 1000.0) * ENERGY_PER_1K_TOKENS_WH;
+    double co2_grams = energy_wh * CARBON_INTENSITY_G_PER_KWH / 1000.0;
+
+    std::lock_guard<std::mutex> lock(g_stats_mutex);
+    g_stats.total_requests++;
+    g_stats.total_prompt_tokens     += prompt_tokens;
+    g_stats.total_completion_tokens += completion_tokens;
+    g_stats.total_tokens            += total_tokens;
+    g_stats.total_co2_grams         += co2_grams;
+    g_stats.total_energy_wh         += energy_wh;
+
+    RequestLog log;
+    log.timestamp         = getCurrentTimestamp();
+    log.source            = source;
+    log.model             = model;
+    log.provider_host     = provider_host;
+    log.path              = path;
+    log.prompt_tokens     = prompt_tokens;
+    log.completion_tokens = completion_tokens;
+    log.total_tokens      = total_tokens;
+    log.co2_grams         = co2_grams;
+    log.energy_wh         = energy_wh;
+    g_stats.logs.push_back(log);
 }
 
 // ─── HTTP Parsing ───────────────────────────────────────────────────────────
@@ -554,6 +591,7 @@ std::string buildStatsJson() {
         const auto& log = g_stats.logs[i];
         oss << "    {\n";
         oss << "      \"timestamp\": \""         << jsonEscape(log.timestamp)     << "\",\n";
+        oss << "      \"source\": \""            << jsonEscape(log.source)        << "\",\n";
         oss << "      \"provider_host\": \""     << jsonEscape(log.provider_host) << "\",\n";
         oss << "      \"path\": \""              << jsonEscape(log.path)          << "\",\n";
         oss << "      \"model\": \""             << jsonEscape(log.model)         << "\",\n";
@@ -625,6 +663,63 @@ void handleClient(int client_fd) {
         resetStats();
         sendResponse(client_fd, 200, "OK", "application/json", "{\"status\":\"reset\"}\n");
         close(client_fd);
+        return;
+    }
+
+    // ── Browser extension usage estimates ───────────────────────────────
+    if (req.method == "POST" && req.path == "/browser-usage") {
+        int prompt_tokens = firstPositiveJsonInt(req.body, {
+            "prompt_tokens",
+            "input_tokens"
+        });
+        int completion_tokens = firstPositiveJsonInt(req.body, {
+            "completion_tokens",
+            "output_tokens"
+        });
+        int total_tokens = firstPositiveJsonInt(req.body, {
+            "total_tokens"
+        });
+
+        if (prompt_tokens < 0) prompt_tokens = 0;
+        if (completion_tokens < 0) completion_tokens = 0;
+        if (total_tokens <= 0) total_tokens = prompt_tokens + completion_tokens;
+
+        if (total_tokens <= 0) {
+            sendResponse(client_fd, 400, "Bad Request", "application/json",
+                "{\"error\":\"No positive token estimate provided\"}\n");
+            close(client_fd);
+            return;
+        }
+
+        std::string model = extractJsonString(req.body, "model");
+        if (model.empty()) model = "chatgpt.com-estimate";
+
+        std::string source = extractJsonString(req.body, "source");
+        if (source.empty()) source = "browser-extension";
+
+        std::string page_url = extractJsonString(req.body, "page_url");
+        if (page_url.empty()) page_url = "/browser-usage";
+
+        recordUsage(source, model, "chatgpt.com", page_url,
+                    prompt_tokens, completion_tokens, total_tokens);
+
+        double energy_wh = (total_tokens / 1000.0) * ENERGY_PER_1K_TOKENS_WH;
+        double co2_grams = energy_wh * CARBON_INTENSITY_G_PER_KWH / 1000.0;
+
+        std::ostringstream body;
+        body << std::fixed << std::setprecision(6)
+             << "{\"status\":\"ok\",\"total_tokens\":" << total_tokens
+             << ",\"co2_grams\":" << co2_grams << "}\n";
+        sendResponse(client_fd, 200, "OK", "application/json", body.str());
+        close(client_fd);
+
+        std::cout << CLR_GREEN << "  ✓ " << CLR_RESET
+                  << CLR_BOLD << "chatgpt.com estimate" << CLR_RESET << " | "
+                  << CLR_CYAN << "Tokens: " << total_tokens
+                  << CLR_DIM << " (prompt:" << prompt_tokens
+                  << " + completion:" << completion_tokens << ")" << CLR_RESET
+                  << " | " << CLR_LEAF << "🌿 " << std::fixed << std::setprecision(4)
+                  << co2_grams << "g CO₂" << CLR_RESET << std::endl;
         return;
     }
 
@@ -723,27 +818,8 @@ void handleClient(int client_fd) {
     double co2_grams = energy_wh * CARBON_INTENSITY_G_PER_KWH / 1000.0;
 
     // ── Update global stats ──────────────────────────────────────────────
-    {
-        std::lock_guard<std::mutex> lock(g_stats_mutex);
-        g_stats.total_requests++;
-        g_stats.total_prompt_tokens     += prompt_tokens;
-        g_stats.total_completion_tokens += completion_tokens;
-        g_stats.total_tokens            += total_tokens;
-        g_stats.total_co2_grams         += co2_grams;
-        g_stats.total_energy_wh         += energy_wh;
-
-        RequestLog log;
-        log.timestamp         = getCurrentTimestamp();
-        log.model             = model_name;
-        log.provider_host     = forward_host;
-        log.path              = req.path;
-        log.prompt_tokens     = prompt_tokens;
-        log.completion_tokens = completion_tokens;
-        log.total_tokens      = total_tokens;
-        log.co2_grams         = co2_grams;
-        log.energy_wh         = energy_wh;
-        g_stats.logs.push_back(log);
-    }
+    recordUsage("api-proxy", model_name, forward_host, req.path,
+                prompt_tokens, completion_tokens, total_tokens);
 
     // ── Colored console log ──────────────────────────────────────────────
     std::cout << CLR_GREEN << "  ✓ " << CLR_RESET;
