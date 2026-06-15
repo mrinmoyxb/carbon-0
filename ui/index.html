@@ -20,6 +20,30 @@
             -webkit-app-region: drag;
         }
 
+        body.browser-mode {
+            background: #eef5f1;
+            align-items: center;
+            overflow: auto;
+        }
+
+        body.browser-mode .container {
+            background: #ffffff;
+            border: 1px solid rgba(31, 76, 58, 0.14);
+            border-radius: 8px;
+            box-shadow: 0 18px 45px rgba(31, 76, 58, 0.16);
+        }
+
+        body.browser-mode h1,
+        body.browser-mode p {
+            color: #20382d;
+            text-shadow: none;
+        }
+
+        body.browser-mode .pet-avatar {
+            width: 140px;
+            height: 140px;
+        }
+
         .container {
             background: transparent;
             padding: 10px;
@@ -174,6 +198,8 @@
             padding: 4px 10px;
             border-radius: 12px;
             transform: translateZ(10px);
+            line-height: 1.35;
+            max-width: 220px;
         }
 
         /* Keyframes */
@@ -224,14 +250,20 @@
         const metricsBar = document.getElementById('metricsBar');
         const speechBubble = document.getElementById('speechBubble');
         const container = document.querySelector('.container');
+
+        if (!window.startWindowDrag) {
+            document.body.classList.add('browser-mode');
+        }
         
         let currentEmotion = '';
         let isSleeping = false;
         let continuousActiveSeconds = 0;
         let bubbleTimeout = null;
+        let tokenStats = null;
 
         const IDLE_SLEEP_THRESHOLD = 60; // 1 minute (for testing)
         const REMINDER_INTERVAL = 600;   // 10 minutes (for testing)
+        const TOKEN_PROXY_STATS_URL = 'http://localhost:8888/stats';
 
         const states = {
             happy: {
@@ -247,7 +279,7 @@
                 desc: "CPU getting warm"
             },
             overload: {
-                img: 'assets/overload.png',
+                img: 'assets/overload2.png',
                 animClass: 'anim-overload',
                 title: "Overload!!",
                 desc: "Too many tokens!"
@@ -330,6 +362,18 @@
         }
         setInterval(spawnParticle, 800); // Check every 800ms
 
+        async function refreshTokenStats() {
+            try {
+                const response = await fetch(TOKEN_PROXY_STATS_URL, { cache: 'no-store' });
+                if (!response.ok) throw new Error('stats unavailable');
+                tokenStats = await response.json();
+            } catch (error) {
+                tokenStats = null;
+            }
+        }
+        refreshTokenStats();
+        setInterval(refreshTokenStats, 2000);
+
         // Gamification Logic
         function processGamification(idleSeconds) {
             if (isSleeping && idleSeconds < 5) {
@@ -365,15 +409,20 @@
             metricsBar.style.display = 'block';
             
             const wStr = parseFloat(watts).toFixed(1);
-            const co2Str = parseFloat(co2Grams).toFixed(5);
-            metricsBar.innerText = `${wStr}W | ${co2Str}g CO₂`;
+            const localCo2Str = parseFloat(co2Grams).toFixed(5);
+            const tokenCo2 = tokenStats ? Number(tokenStats.total_co2_grams || 0) : 0;
+            const totalTokens = tokenStats ? Number(tokenStats.total_tokens || 0) : 0;
+            const tokenCo2Str = tokenCo2.toFixed(5);
+            metricsBar.innerText = tokenStats
+                ? `${wStr}W | Local ${localCo2Str}g CO₂\nTokens ${totalTokens} | API ${tokenCo2Str}g CO₂`
+                : `${wStr}W | Local ${localCo2Str}g CO₂\nProxy offline`;
 
             let forcedEmotion = processGamification(idleSeconds || 0);
 
             if (forcedEmotion) {
                 setEmotion(forcedEmotion);
             } else {
-                if (watts > 8.0) {
+                if (watts > 8.0 || tokenCo2 > 1.0) {
                     setEmotion('overload');
                 } else if (watts > 3.0) {
                     setEmotion('stressed');

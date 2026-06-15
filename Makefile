@@ -29,15 +29,17 @@ run-tracker: build/power_tracker
 run-proxy: build/token_proxy
 	CARBON_PROXY_PORT=$(PROXY_PORT) ./build/token_proxy
 
+run-desktop: build/carbon_pet build/token_proxy
+	@echo "Starting Carbon Token Proxy on http://localhost:$(PROXY_PORT)"
+	@echo "Starting desktop Carbon Pet"
+	@trap 'kill 0' INT TERM EXIT; \
+	CARBON_PROXY_PORT=$(PROXY_PORT) ./build/token_proxy & \
+	./build/carbon_pet
+
 run-ui:
 	cd ui && $(PYTHON) -m http.server $(UI_PORT) --bind 127.0.0.1
 
-run-dev: build/token_proxy
-	@echo "Starting Carbon Token Proxy on http://localhost:$(PROXY_PORT)"
-	@echo "Starting UI on http://localhost:$(UI_PORT)"
-	@trap 'kill 0' INT TERM EXIT; \
-	CARBON_PROXY_PORT=$(PROXY_PORT) ./build/token_proxy & \
-	cd ui && $(PYTHON) -m http.server $(UI_PORT) --bind 127.0.0.1
+run-dev: run-desktop
 
 clean:
 	rm -rf build/*
