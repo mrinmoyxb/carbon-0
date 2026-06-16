@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>carb-0n — your code has a footprint</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-logo">carb<span>-0n</span></div>
+        <div class="nav-links">
+            <a href="#features">features</a>
+            <a href="#how">how it works</a>
+            <a href="#download">download</a>
+            <a href="#docs">docs</a>
+            <a href="#about">about</a>
+            <a href="https://github.com/mrinmoyxb/carbon-0" target="_blank">github</a>
+        </div>
+        <a href="#download" class="nav-cta">download free</a>
+    </nav>
+
+    <!-- TICKER -->
+    <div style="margin-top: 60px;" class="ticker">
+        <div class="ticker-inner">
+            <span class="ticker-item">🦘 watts is watching your tokens</span>
+            <span class="ticker-item">GPT-4o · ~0.3g CO₂ per 1K tokens</span>
+            <span class="ticker-item">claude sonnet · ~0.1g CO₂ per 1K tokens</span>
+            <span class="ticker-item">your macbook · ~8W active load</span>
+            <span class="ticker-item">india grid · ~700g CO₂ per kWh</span>
+            <span class="ticker-item">every prompt has a price</span>
+            <span class="ticker-item">🦘 watts is watching your tokens</span>
+            <span class="ticker-item">GPT-4o · ~0.3g CO₂ per 1K tokens</span>
+            <span class="ticker-item">claude sonnet · ~0.1g CO₂ per 1K tokens</span>
+            <span class="ticker-item">your macbook · ~8W active load</span>
+            <span class="ticker-item">india grid · ~700g CO₂ per kWh</span>
+            <span class="ticker-item">every prompt has a price</span>
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero">
+        <p class="hero-eyebrow">introducing <span class="hero-eyebrow-carb">carb<span
+                    class="hero-eyebrow-on">-0n</span></span></p>
+        <h1>your code has<br>a <span class="accent">footprint</span>.</h1>
+        <p class="hero-sub"><span class="hero-sub-watts">Watts</span> lives on your desktop and
+            tracks the real carbon
+            cost of your LLM usage, device power,
+            and screen time. In real-time.</p>
+        <div class="hero-actions">
+            <a href="#download" class="btn-primary">&#8595; download free</a>
+            <a href="#how" class="btn-secondary">see how it works</a>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-item">
+                <div class="stat-num">0.3g</div>
+                <div class="stat-label">CO₂ per 1K GPT-4o tokens</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">700g</div>
+                <div class="stat-label">CO₂ per kWh on India's grid</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">0</div>
+                <div class="stat-label">other tools track this for devs</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MASCOT STATES -->
+    <div class="mascot-strip">
+        <div class="mascot-inner">
+            <p class="mascot-label">meet watts — he has opinions about your prompts</p>
+            <div class="mascot-states">
+                <div class="mascot-state state-happy">
+                    <span class="mascot-emoji">🦘</span>
+                    <div class="mascot-name">happy</div>
+                    <div class="mascot-trigger">efficient session · low emissions · good prompts</div>
+                </div>
+                <div class="mascot-state state-stressed">
+                    <span class="mascot-emoji">😓</span>
+                    <div class="mascot-name">stressed</div>
+                    <div class="mascot-trigger">building up · 30 min of heavy usage</div>
+                </div>
+                <div class="mascot-state state-overload">
+                    <span class="mascot-emoji">🔥</span>
+                    <div class="mascot-name">overload</div>
+                    <div class="mascot-trigger">you asked GPT-4 to write hello world. again.</div>
+                </div>
+                <div class="mascot-state state-sleeping">
+                    <span class="mascot-emoji">💤</span>
+                    <div class="mascot-name">resting</div>
+                    <div class="mascot-trigger">device idle · emissions paused · watts approves</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEATURES -->
+    <section id="features">
+        <p class="section-label">features</p>
+        <h2 class="section-title">everything Watts tracks<br>while you ship</h2>
+        <p class="section-sub">No dashboards to open. No forms to fill. Watts just watches and reacts.</p>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">LLM token tracking</div>
+                <div class="feature-desc">Every API call to ChatGPT, Claude, or Gemini is counted, converted to CO₂, and
+                    added to your running total.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💻</div>
+                <div class="feature-title">device power monitoring</div>
+                <div class="feature-desc">CPU, RAM, and battery drain tracked via psutil. Multiplied by your region's
+                    live grid carbon intensity.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🌍</div>
+                <div class="feature-title">real-time grid intensity</div>
+                <div class="feature-desc">Pulls live gCO₂/kWh data for your region from Electricity Maps API. Your
+                    number is always accurate.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <div class="feature-title">model swap suggester</div>
+                <div class="feature-desc">Burning Opus on a simple task? Watts suggests a lighter model that does 80% of
+                    the job at 5% of the cost.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">prompt efficiency score</div>
+                <div class="feature-desc">Tracks tokens-per-outcome. Grades your prompting habits. Rewards tight,
+                    precise prompts with a better score.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📖</div>
+                <div class="feature-title">end-of-day story</div>
+                <div class="feature-desc">At 6pm, Watts generates a one-paragraph narrative of your day's emissions.
+                    Personal, memorable, shareable.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how"
+        style="background: var(--bg2); max-width: 100%; border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); padding: 6rem 2rem;">
+        <div style="max-width: 1100px; margin: 0 auto;">
+            <div class="how-wrap">
+                <div>
+                    <p class="section-label">how it works</p>
+                    <h2 class="section-title">two data streams,<br>one little koala</h2>
+                    <div class="how-steps" style="margin-top: 2rem;">
+                        <div class="how-step">
+                            <div class="step-num">01</div>
+                            <div>
+                                <div class="step-title">intercept API calls</div>
+                                <div class="step-desc">A lightweight SDK wrapper catches every outbound LLM call and
+                                    counts tokens before returning the response.</div>
+                            </div>
+                        </div>
+                        <div class="how-step">
+                            <div class="step-num">02</div>
+                            <div>
+                                <div class="step-title">measure device load</div>
+                                <div class="step-desc">psutil polls CPU and memory every 60s, estimates wattage,
+                                    multiplies by live grid carbon intensity.</div>
+                            </div>
+                        </div>
+                        <div class="how-step">
+                            <div class="step-num">03</div>
+                            <div>
+                                <div class="step-title">merge into one number</div>
+                                <div class="step-desc">Both streams combine into a rolling gCO₂ total, stored locally in
+                                    SQLite. Nothing leaves your machine.</div>
+                            </div>
+                        </div>
+                        <div class="how-step">
+                            <div class="step-num">04</div>
+                            <div>
+                                <div class="step-title">Watts reacts</div>
+                                <div class="step-desc">The desktop character updates its mood state, sends nudges, and
+                                    roasts you when you deserve it.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="code-preview">
+                    <div class="code-header">
+                        <div class="dot dot-red"></div>
+                        <div class="dot dot-amber"></div>
+                        <div class="dot dot-green"></div>
+                        <div class="code-filename">carbon0/tracker.py</div>
+                    </div>
+                    <div class="code-body">
+                        <span class="c-gray"># wrap your existing LLM calls</span><br>
+                        <span class="c-blue">from</span> <span class="c-white">carbon0</span> <span
+                            class="c-blue">import</span> <span class="c-green">track</span><br><br>
+                        <span class="c-gray"># before</span><br>
+                        <span class="c-white">response = client.messages.create(</span><br>
+                        &nbsp;&nbsp;<span class="c-yellow">model</span>=<span
+                            class="c-red">"claude-sonnet-4-6"</span><span class="c-white">,</span><br>
+                        &nbsp;&nbsp;<span class="c-yellow">messages</span>=<span class="c-white">messages</span><br>
+                        <span class="c-white">)</span><br><br>
+                        <span class="c-gray"># after (one line change)</span><br>
+                        <span class="c-white">response = </span><span class="c-green">track</span><span
+                            class="c-white">(client.messages.create(</span><br>
+                        &nbsp;&nbsp;<span class="c-yellow">model</span>=<span
+                            class="c-red">"claude-sonnet-4-6"</span><span class="c-white">,</span><br>
+                        &nbsp;&nbsp;<span class="c-yellow">messages</span>=<span class="c-white">messages</span><br>
+                        <span class="c-white">))</span><br><br>
+                        <span class="c-gray"># watts gets the rest</span><br>
+                        <span class="c-gray"># &gt; session: 2.4g CO₂ · 47 prompts</span><br>
+                        <span class="c-gray"># &gt; efficiency score: B+</span><br>
+                        <span class="c-gray"># &gt; watts mood: 😓 stressed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DOWNLOAD -->
+    <section id="download">
+        <p class="section-label">download</p>
+        <h2 class="section-title">get Watts on your desktop</h2>
+        <p class="section-sub">Free, open source, runs locally. Your data never leaves your machine.</p>
+        <div class="download-grid">
+            <div class="download-card featured">
+                <div class="platform-icon">🍎</div>
+                <div>
+                    <div class="platform-name">macOS</div>
+                    <div class="platform-version">v0.1.0 · Apple Silicon + Intel</div>
+                </div>
+                <div class="download-btn">download .dmg</div>
+            </div>
+            <div class="download-card">
+                <div class="platform-icon">🪟</div>
+                <div>
+                    <div class="platform-name">Windows</div>
+                    <div class="platform-version">v0.1.0 · Windows 10/11</div>
+                </div>
+                <div class="download-btn">download .exe</div>
+            </div>
+            <div class="download-card">
+                <div class="platform-icon">🐧</div>
+                <div>
+                    <div class="platform-name">Linux</div>
+                    <div class="platform-version">v0.1.0 · .deb / .AppImage</div>
+                </div>
+                <div class="download-btn">download .deb</div>
+            </div>
+            <div class="download-card">
+                <div class="platform-icon">🧩</div>
+                <div>
+                    <div class="platform-name">Chrome Extension</div>
+                    <div class="platform-version">tracks ChatGPT usage in-browser</div>
+                </div>
+                <div class="download-btn">add to chrome</div>
+            </div>
+        </div>
+        <p style="font-size: 13px; color: var(--text3); margin-top: 1.5rem;">
+            or install via pip: <code
+                style="font-family: var(--mono); background: var(--bg3); padding: 3px 8px; border-radius: 4px; color: var(--green-light);">pip install carb-0n</code>
+        </p>
+    </section>
+
+    <!-- DOCS -->
+    <section id="docs"
+        style="background: var(--bg2); max-width: 100%; border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); padding: 6rem 2rem;">
+        <div style="max-width: 1100px; margin: 0 auto;">
+            <p class="section-label">documentation</p>
+            <h2 class="section-title" style="margin-bottom: 3rem;">get started in 5 minutes</h2>
+            <div class="docs-layout">
+                <div class="docs-nav">
+                    <div class="docs-nav-title">on this page</div>
+                    <a href="#install" class="active">installation</a>
+                    <a href="#wrap">wrapping LLM calls</a>
+                    <a href="#config">configuration</a>
+                    <a href="#watts">watts states</a>
+                    <a href="#privacy">privacy</a>
+                </div>
+                <div class="docs-content">
+                    <h3 id="install">installation</h3>
+                    <p>Install carb-0n via pip. Python 3.9+ required.</p>
+                    <div class="docs-code-block">
+                        <span style="color: var(--text3)"># install</span><br>
+                        <span style="color: var(--green-light)">pip install carb-0n</span><br><br>
+                        <span style="color: var(--text3)"># launch Watts on your desktop</span><br>
+                        <span style="color: var(--green-light)">carbon0 start</span>
+                    </div>
+
+                    <h3 id="wrap">wrapping LLM calls</h3>
+                    <p>carb-0n works by wrapping your existing API calls. Add one import and one wrapper function —
+                        that's it.</p>
+                    <div class="docs-code-block">
+                        <span style="color: var(--text3)"># works with OpenAI, Anthropic, Google</span><br>
+                        <span style="color: #85B7EB">from</span> <span style="color: var(--text)">carbon0</span> <span
+                            style="color: #85B7EB">import</span> <span
+                            style="color: var(--green-light)">track</span><br><br>
+                        <span style="color: var(--text)">response = </span><span
+                            style="color: var(--green-light)">track</span><span
+                            style="color: var(--text)">(your_llm_call(...))</span>
+                    </div>
+
+                    <h3 id="config">configuration</h3>
+                    <p>carb-0n auto-detects your region for grid intensity. You can override in
+                        <code>~/.carbon0/config.toml</code>.
+                    </p>
+                    <div class="docs-code-block">
+                        <span style="color: var(--text3)">[region]</span><br>
+                        <span style="color: var(--green-light)">zone</span> = <span
+                            style="color: #EF9F27">"IN-NO"</span> <span style="color: var(--text3)"># India
+                            North</span><br><br>
+                        <span style="color: var(--text3)">[watts]</span><br>
+                        <span style="color: var(--green-light)">nudge_interval</span> = <span
+                            style="color: #85B7EB">30</span> <span style="color: var(--text3)"># minutes</span><br>
+                        <span style="color: var(--green-light)">roast_mode</span> = <span
+                            style="color: #85B7EB">true</span><br>
+                        <span style="color: var(--green-light)">daily_story</span> = <span
+                            style="color: #85B7EB">true</span>
+                    </div>
+
+                    <h3 id="watts">watts mood states</h3>
+                    <p>Watts transitions between four states based on your rolling 1-hour CO₂ total.</p>
+                    <div class="docs-code-block">
+                        <span style="color: #5DCAA5">happy</span> <span style="color: var(--text3)">&lt; 5g CO₂/hr ·
+                            efficient session</span><br>
+                        <span style="color: #EF9F27">stressed</span> <span style="color: var(--text3)">5–15g CO₂/hr ·
+                            building up</span><br>
+                        <span style="color: #E24B4A">overload</span> <span style="color: var(--text3)">&gt; 15g CO₂/hr ·
+                            watts is judging you</span><br>
+                        <span style="color: #85B7EB">sleeping</span> <span style="color: var(--text3)">idle detected ·
+                            emissions paused</span>
+                    </div>
+
+                    <h3 id="privacy">privacy</h3>
+                    <p>All data is stored locally in <code>~/.carbon0/data.db</code> (SQLite). carb-0n makes exactly one
+                        external request: fetching live grid intensity from Electricity Maps. No prompt content is ever
+                        stored or transmitted.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about">
+        <div class="about-grid">
+            <div class="about-text">
+                <p class="section-label">about</p>
+                <h2 class="section-title">why <span class="section-title-carb">carb</span><span
+                        class="section-title-on">-0n?</span></h2>
+                <p>Every time you ask an LLM a question, it burns energy in a data center somewhere. Most developers
+                    have zero visibility into this and that's a problem, because LLM usage is growing fast.</p>
+                <p>carb-0n was built to make that cost tangible. Not to make you feel guilty, but to make you a more
+                    intentional developer. Tighter prompts. Lighter models when they'll do. Awareness that compounds
+                    over time.</p>
+                <p>Watts is your companion in that. He's not preachy. He's just honest.</p>
+                <div class="tag-row">
+                    <span class="tag">open source</span>
+                    <span class="tag">C++</span>
+                    <span class="tag">python</span>
+                    <span class="tag">local-first</span>
+                    <span class="tag">no telemetry</span>
+                    <span class="tag">built for devs</span>
+                </div>
+            </div>
+            <div class="about-card">
+                <span class="about-mascot">🦘</span>
+                <div class="about-card-title">hi, i'm Watts.</div>
+                <div class="about-card-sub" style="color: var(--text2); font-size: 14px; line-height: 1.6;">
+                    I live in the corner of your screen. I watch your tokens. I have opinions.<br><br>
+                    When you write a tight, efficient prompt — I'm happy.<br><br>
+                    When you ask GPT-4 to write a hello world for the third time today — we need to talk.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <div style="border-top: 0.5px solid var(--border);">
+        <footer>
+            <div class="footer-brand">carb<span>-0n</span> · know what you burn.</div>
+            <div class="footer-right">built with 🦘 and a lot of irony · open source</div>
+        </footer>
+    </div>
+
+</body>
+
+<script>
+    const navLinks = document.querySelectorAll('.docs-nav a');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function () {
+            document.querySelector('.docs-nav a.active')?.classList.remove('active');
+            this.classList.add('active');
+        });
+    });
+</script>
+
+</html>

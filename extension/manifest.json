@@ -1,13 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Carbon Pet for ChatGPT",
-  "description": "Estimate visible ChatGPT token usage and send CO2 estimates to the local Carbon Pet desktop app.",
-  "version": "0.1.0",
+  "name": "Carbon Pet for AI Chatbots",
+  "description": "Estimate visible token usage and send CO2 estimates to the local Carbon Pet desktop app for ChatGPT, Gemini and Claude.",
+  "version": "0.2.0",
   "content_scripts": [
     {
       "matches": [
         "https://chatgpt.com/*",
-        "https://chat.openai.com/*"
+        "https://chat.openai.com/*",
+        "https://gemini.google.com/*",
+        "https://claude.ai/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"

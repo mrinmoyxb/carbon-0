@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbon Pet</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: rgba(0, 0, 0, 0);
+            /* Transparent background */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            /* Align bottom to leave room for bubble */
+            height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-app-region: drag;
+        }
+
+        body.browser-mode {
+            background: #eef5f1;
+            align-items: center;
+            overflow: auto;
+        }
+
+        body.browser-mode .container {
+            background: #ffffff;
+            border: 1px solid rgba(31, 76, 58, 0.14);
+            border-radius: 8px;
+            box-shadow: 0 18px 45px rgba(31, 76, 58, 0.16);
+        }
+
+        body.browser-mode h1,
+        body.browser-mode p {
+            color: #20382d;
+            text-shadow: none;
+        }
+
+        body.browser-mode .pet-avatar {
+            width: 140px;
+            height: 140px;
+        }
+
+        .container {
+            background: transparent;
+            padding: 10px;
+            text-align: center;
+            width: 250px;
+            height: 350px;
+            /* Taller to fit bubble */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Speech Bubble */
+        .speech-bubble {
+            position: absolute;
+            bottom: 170px;
+            /* Fixed distance above the koala */
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px;
+            padding: 12px 16px;
+            color: #333;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(10px) scale(0.9) translateZ(30px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            max-width: 180px;
+            z-index: 10;
+            line-height: 1.4;
+            box-sizing: border-box;
+        }
+
+        .speech-bubble.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1) translateZ(30px);
+        }
+
+        /* Speech Bubble tail */
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            margin-left: -10px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: rgba(255, 255, 255, 0.95) transparent transparent transparent;
+        }
+
+        .pet-container {
+            position: relative;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 5px;
+            margin-top: 20px;
+            transform: translateZ(20px);
+        }
+
+        .pet-avatar {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            /* Drop shadow to make it pop */
+        }
+
+        .pet-avatar:active {
+            cursor: grabbing;
+        }
+
+        /* Particles */
+        .particle {
+            position: absolute;
+            font-size: 1.2rem;
+            pointer-events: none;
+            z-index: 5;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-60px) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        @keyframes explodeParticle {
+            0% {
+                transform: translate(0, 0) scale(0.5);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* Animations */
+        .anim-happy {
+            animation: floatBounce 3s infinite ease-in-out;
+        }
+
+        .anim-stressed {
+            animation: stressedShake 0.4s infinite ease-in-out;
+        }
+
+        .anim-overload {
+            animation: overloadJitter 0.1s infinite;
+            filter: drop-shadow(0 0 10px rgba(255, 60, 60, 0.9));
+        }
+
+        .anim-sleeping {
+            animation: sleepBreathe 4s infinite ease-in-out;
+        }
+
+        @keyframes popTransition {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(0.6) rotate(10deg);
+                filter: brightness(1.2);
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .anim-pop {
+            animation: popTransition 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Sleep Zzz particles */
+        .zzz {
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            font-size: 1.5rem;
+            color: #fff;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .anim-sleeping~.zzz {
+            animation: floatZzz 3s infinite linear;
+        }
+
+        h1 {
+            font-size: 1.15rem;
+            color: #fff;
+            margin: 0;
+            font-weight: 700;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+            transform: translateZ(10px);
+        }
+
+        p {
+            font-size: 0.85rem;
+            color: #eee;
+            margin: 4px 0 0 0;
+            font-weight: 600;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+            min-height: 20px;
+            transform: translateZ(10px);
+        }
+
+        .metrics {
+            margin-top: 8px;
+            margin-bottom: 10px;
+            font-size: 0.75rem;
+            color: #ffde59;
+            font-weight: 700;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 10px;
+            border-radius: 12px;
+            transform: translateZ(10px);
+            line-height: 1.35;
+            max-width: 220px;
+        }
+
+        /* Keyframes */
+        @keyframes floatBounce {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(-10px) scale(1.02);
+            }
+        }
+
+        @keyframes stressedShake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-3px) rotate(-3deg);
+            }
+
+            75% {
+                transform: translateX(3px) rotate(3deg);
+            }
+        }
+
+        @keyframes overloadJitter {
+            0% {
+                transform: translate(0, 0) scale(1.05);
+            }
+
+            25% {
+                transform: translate(-3px, 3px) scale(1.05);
+            }
+
+            50% {
+                transform: translate(3px, -3px) scale(1.05);
+            }
+
+            75% {
+                transform: translate(-3px, -3px) scale(1.05);
+            }
+
+            100% {
+                transform: translate(3px, 3px) scale(1.05);
+            }
+        }
+
+        @keyframes sleepBreathe {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05) translateY(3px);
+            }
+        }
+
+        @keyframes floatZzz {
+            0% {
+                opacity: 0;
+                transform: translate(0, 0) scale(0.5);
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(20px, -40px) scale(1.2);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="speechBubble" class="speech-bubble">Hello!</div>
+        <div class="pet-container">
+            <img id="petImg" class="pet-avatar anim-happy" src="assets/happy.png" alt="Koala Pet"
+                onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'50\' font-size=\'40\'>🐨</text></svg>'">
+            <div class="zzz">Z</div>
+        </div>
+        <h1 id="statusTitle">Carbon Pet</h1>
+        <p id="statusDesc">Warming up sensors...</p>
+        <div id="metricsBar" class="metrics" style="display:none;">0W | 0g CO₂</div>
+    </div>
+
+    <script>
+        const petImg = document.getElementById('petImg');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusDesc = document.getElementById('statusDesc');
+        const metricsBar = document.getElementById('metricsBar');
+        const speechBubble = document.getElementById('speechBubble');
+        const container = document.querySelector('.container');
+
+        if (!window.startWindowDrag) {
+            document.body.classList.add('browser-mode');
+        }
+
+        let currentEmotion = '';
+        let isSleeping = false;
+        let continuousActiveSeconds = 0;
+        let bubbleTimeout = null;
+        let tokenStats = null;
+
+        const IDLE_SLEEP_THRESHOLD = 60; // 1 minute (for testing)
+        const REMINDER_INTERVAL = 600;   // 10 minutes (for testing)
+        const TOKEN_PROXY_STATS_URL = 'http://localhost:8888/stats';
+
+        const states = {
+            happy: {
+                img: 'assets/happy.png',
+                animClass: 'anim-happy',
+                title: "All Good!",
+                desc: "Low power mode"
+            },
+            stressed: {
+                img: 'assets/stressed.png',
+                animClass: 'anim-stressed',
+                title: "Working Hard!",
+                desc: "CPU getting warm"
+            },
+            overload: {
+                img: 'assets/overload2.png',
+                animClass: 'anim-overload',
+                title: "Overload!!",
+                desc: "Too many tokens!"
+            },
+            sleeping: {
+                img: 'assets/sleeping.png',
+                animClass: 'anim-sleeping',
+                title: "Zzz...",
+                desc: "System idle"
+            }
+        };
+
+        function setEmotion(emotion) {
+            if (currentEmotion === emotion) return;
+            currentEmotion = emotion;
+
+            const state = states[emotion];
+            if (!state) return;
+
+            // Pop transition sequence
+            petImg.classList.remove('anim-happy', 'anim-stressed', 'anim-overload', 'anim-sleeping', 'anim-pop');
+            void petImg.offsetWidth; // trigger reflow
+            petImg.classList.add('anim-pop');
+
+            setTimeout(() => {
+                petImg.src = state.img;
+                statusTitle.innerText = state.title;
+                statusDesc.innerText = state.desc;
+            }, 150); // Mid-way through the pop animation
+
+            setTimeout(() => {
+                petImg.classList.remove('anim-pop');
+                petImg.classList.add(state.animClass);
+            }, 400); // After pop finishes
+        }
+
+        function showBubble(text, durationMs = 5000) {
+            speechBubble.innerText = text;
+            speechBubble.classList.add('visible');
+
+            if (bubbleTimeout) clearTimeout(bubbleTimeout);
+
+            bubbleTimeout = setTimeout(() => {
+                speechBubble.classList.remove('visible');
+            }, durationMs);
+        }
+
+        // Particle Spawner
+        function spawnParticle() {
+            if (isSleeping) return;
+
+            const p = document.createElement('div');
+            p.className = 'particle';
+
+            if (currentEmotion === 'happy') {
+                p.innerText = '🍃';
+                p.style.left = (20 + Math.random() * 60) + 'px';
+                p.style.top = (40 + Math.random() * 40) + 'px';
+                p.style.animation = 'floatParticle 2s ease-out';
+            } else if (currentEmotion === 'stressed') {
+                p.innerText = '⚡️';
+                p.style.left = (30 + Math.random() * 40) + 'px';
+                p.style.top = (20 + Math.random() * 40) + 'px';
+                p.style.animation = 'floatParticle 1.5s ease-out';
+            } else if (currentEmotion === 'overload') {
+                p.innerText = '🔥';
+                p.style.left = (30 + Math.random() * 40) + 'px';
+                p.style.top = (20 + Math.random() * 40) + 'px';
+                p.style.animation = 'floatParticle 1.5s ease-out';
+            } else {
+                return; // No particles for sleeping
+            }
+
+            document.querySelector('.pet-container').appendChild(p);
+            setTimeout(() => p.remove(), 2000);
+        }
+        setInterval(spawnParticle, 800); // Check every 800ms
+
+        async function refreshTokenStats() {
+            try {
+                const response = await fetch(TOKEN_PROXY_STATS_URL, { cache: 'no-store' });
+                if (!response.ok) throw new Error('stats unavailable');
+                tokenStats = await response.json();
+            } catch (error) {
+                tokenStats = null;
+            }
+        }
+        refreshTokenStats();
+        setInterval(refreshTokenStats, 2000);
+
+        // Gamification Logic
+        function processGamification(idleSeconds) {
+            if (isSleeping && idleSeconds < 5) {
+                isSleeping = false;
+                continuousActiveSeconds = 0;
+                showBubble("Welcome back! Thanks for taking a break! 🌿", 6000);
+            }
+
+            if (idleSeconds > IDLE_SLEEP_THRESHOLD) {
+                if (!isSleeping) {
+                    isSleeping = true;
+                    showBubble("Stepping away... Going to sleep to save power! 💤", 4000);
+                }
+                return 'sleeping';
+            }
+
+            if (!isSleeping && idleSeconds < 5) {
+                continuousActiveSeconds++;
+                if (continuousActiveSeconds > 0 && continuousActiveSeconds % REMINDER_INTERVAL === 0) {
+                    const reminders = [
+                        "Time to stretch your legs! 🏃‍♂️",
+                        "You've optimized the code. Now optimize your water intake 🧃",
+                        "Go and touch some grass 🌿",
+                        "Your code is running well, maybe give your eyes a break? 👀"
+                    ];
+                    showBubble(reminders[Math.floor(Math.random() * reminders.length)], 8000);
+                }
+            }
+            return null;
+        }
+
+        // Bridge function exposed to C++
+        window.updateMetrics = function (watts, co2Grams, idleSeconds) {
+            metricsBar.style.display = 'block';
+
+            const wStr = parseFloat(watts).toFixed(1);
+            const localCo2Str = parseFloat(co2Grams).toFixed(5);
+            const tokenCo2 = tokenStats ? Number(tokenStats.total_co2_grams || 0) : 0;
+            const totalTokens = tokenStats ? Number(tokenStats.total_tokens || 0) : 0;
+            const tokenCo2Str = tokenCo2.toFixed(5);
+            metricsBar.innerText = tokenStats
+                ? `${wStr}W | Local ${localCo2Str}g CO₂\nTokens ${totalTokens} | API ${tokenCo2Str}g CO₂`
+                : `${wStr}W | Local ${localCo2Str}g CO₂\nProxy offline`;
+
+            let forcedEmotion = processGamification(idleSeconds || 0);
+
+            if (forcedEmotion) {
+                setEmotion(forcedEmotion);
+            } else {
+                if (watts > 8.0 || tokenCo2 > 1.0) {
+                    setEmotion('overload');
+                } else if (watts > 3.0) {
+                    setEmotion('stressed');
+                } else {
+                    setEmotion('happy');
+                }
+            }
+        };
+
+        // Make window draggable via C++ bridge
+        window.addEventListener('mousedown', (e) => {
+            if (e.button === 0 && window.startWindowDrag) {
+                window.startWindowDrag("");
+            }
+        });
+    </script>
+</body>
+
+</html>
