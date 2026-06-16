@@ -10,6 +10,31 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .baking-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #EF9F27;
+            background: rgba(239, 159, 39, 0.12);
+            border: 1px solid rgba(239, 159, 39, 0.35);
+            border-radius: 4px;
+            padding: 3px 8px;
+            margin-bottom: 10px;
+            width: fit-content;
+        }
+        .baking-tag::before {
+            content: "🔥";
+            font-size: 10px;
+        }
+        .feature-card, .download-card {
+            position: relative;
+        }
+    </style>
 </head>
 
 <body>
@@ -123,24 +148,28 @@
                     live grid carbon intensity.</div>
             </div>
             <div class="feature-card">
+                <span class="baking-tag">baking</span>
                 <div class="feature-icon">🌍</div>
                 <div class="feature-title">real-time grid intensity</div>
                 <div class="feature-desc">Pulls live gCO₂/kWh data for your region from Electricity Maps API. Your
                     number is always accurate.</div>
             </div>
             <div class="feature-card">
+                <span class="baking-tag">baking</span>
                 <div class="feature-icon">🧠</div>
                 <div class="feature-title">model swap suggester</div>
                 <div class="feature-desc">Burning Opus on a simple task? Watts suggests a lighter model that does 80% of
                     the job at 5% of the cost.</div>
             </div>
             <div class="feature-card">
+                <span class="baking-tag">baking</span>
                 <div class="feature-icon">📊</div>
                 <div class="feature-title">prompt efficiency score</div>
                 <div class="feature-desc">Tracks tokens-per-outcome. Grades your prompting habits. Rewards tight,
                     precise prompts with a better score.</div>
             </div>
             <div class="feature-card">
+                <span class="baking-tag">baking</span>
                 <div class="feature-icon">📖</div>
                 <div class="feature-title">end-of-day story</div>
                 <div class="feature-desc">At 6pm, Watts generates a one-paragraph narrative of your day's emissions.
@@ -241,6 +270,7 @@
                 <div class="download-btn">download .dmg</div>
             </div>
             <div class="download-card">
+                <span class="baking-tag">baking</span>
                 <div class="platform-icon">🪟</div>
                 <div>
                     <div class="platform-name">Windows</div>
@@ -249,6 +279,7 @@
                 <div class="download-btn">download .exe</div>
             </div>
             <div class="download-card">
+                <span class="baking-tag">baking</span>
                 <div class="platform-icon">🐧</div>
                 <div>
                     <div class="platform-name">Linux</div>
@@ -257,6 +288,7 @@
                 <div class="download-btn">download .deb</div>
             </div>
             <div class="download-card">
+                <span class="baking-tag">baking</span>
                 <div class="platform-icon">🧩</div>
                 <div>
                     <div class="platform-name">Chrome Extension</div>
