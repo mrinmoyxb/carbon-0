@@ -565,7 +565,11 @@ async function pollStats() {
     const r = await fetch('http://localhost:8888/stats', { cache:'no-store' });
     if (!r.ok) throw new Error();
     tokenStats = await r.json();
-  } catch { tokenStats = null; }
+    // Use last_platform from backend for accurate LLM chip display
+    const platform = tokenStats.last_platform || null;
+    if (platform) setLLM(platform);
+    else setLLM('offline');
+  } catch { tokenStats = null; setLLM('offline'); }
 }
 pollStats();
 setInterval(pollStats, 2500);
@@ -596,18 +600,13 @@ function processGamification(idleSeconds) {
 }
 
 // ── main update bridge ────────────────────────────────
-window.updateMetrics = function(watts, co2Grams, idleSeconds, platform) {
+window.updateMetrics = function(watts, co2Grams, idleSeconds) {
   const w = parseFloat(watts) || 0;
   const localCo2 = parseFloat(co2Grams) || 0;
 
   const totalTokens = tokenStats ? Number(tokenStats.total_tokens || 0) : 0;
   const tokenCo2    = tokenStats ? Number(tokenStats.total_co2_grams || 0) : 0;
-  const detectedPlat = tokenStats?.last_platform || platform || null;
   const totalCo2    = localCo2 + tokenCo2;
-
-  // update LLM chip
-  if (tokenStats) setLLM(detectedPlat || 'offline');
-  else setLLM('offline');
 
   // metrics
   mTokens.textContent    = totalTokens ? totalTokens.toLocaleString() : '—';
@@ -639,7 +638,7 @@ if (!window.startWindowDrag) {
   setInterval(()=>{
     tick++;
     const w = 2 + Math.abs(Math.sin(tick/15)) * 9;
-    window.updateMetrics(w, w*0.00012, tick%120 < 10 ? 70 : 2, 'claude');
+    window.updateMetrics(w, w*0.00012, tick%120 < 10 ? 70 : 2);
   }, 1000);
   setEmotion('happy');
   showBubble('Hi! I\'m Carbon Pet 🌿 Tracking your AI footprint!', 7000);

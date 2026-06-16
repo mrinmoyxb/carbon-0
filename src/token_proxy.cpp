@@ -96,6 +96,9 @@ struct ProxyStats {
     long long total_tokens            = 0;
     double    total_co2_grams         = 0.0;
     double    total_energy_wh         = 0.0;
+    std::string last_source;
+    std::string last_model;
+    std::string last_platform;        // "chatgpt", "gemini", "claude", or "unknown"
     std::vector<RequestLog> logs;
 };
 
@@ -296,6 +299,18 @@ void recordUsage(const std::string& source,
     g_stats.total_tokens            += total_tokens;
     g_stats.total_co2_grams         += co2_grams;
     g_stats.total_energy_wh         += energy_wh;
+    g_stats.last_source              = source;
+    g_stats.last_model               = model;
+
+    // Derive platform from source string (e.g. "chatgpt-extension" -> "chatgpt")
+    if (source.find("chatgpt") != std::string::npos || source.find("openai") != std::string::npos)
+        g_stats.last_platform = "chatgpt";
+    else if (source.find("gemini") != std::string::npos)
+        g_stats.last_platform = "gemini";
+    else if (source.find("claude") != std::string::npos)
+        g_stats.last_platform = "claude";
+    else if (!source.empty())
+        g_stats.last_platform = "unknown";
 
     RequestLog log;
     log.timestamp         = getCurrentTimestamp();
@@ -585,6 +600,9 @@ std::string buildStatsJson() {
     oss << "  \"total_energy_wh\": "         << g_stats.total_energy_wh        << ",\n";
     oss << "  \"energy_per_1k_tokens_wh\": " << ENERGY_PER_1K_TOKENS_WH        << ",\n";
     oss << "  \"carbon_intensity_g_per_kwh\": " << CARBON_INTENSITY_G_PER_KWH    << ",\n";
+    oss << "  \"last_platform\": \""     << jsonEscape(g_stats.last_platform) << "\",\n";
+    oss << "  \"last_source\": \""       << jsonEscape(g_stats.last_source)   << "\",\n";
+    oss << "  \"last_model\": \""        << jsonEscape(g_stats.last_model)    << "\",\n";
     oss << "  \"requests\": [\n";
 
     for (size_t i = 0; i < g_stats.logs.size(); ++i) {
@@ -692,15 +710,32 @@ void handleClient(int client_fd) {
         }
 
         std::string model = extractJsonString(req.body, "model");
-        if (model.empty()) model = "chatgpt.com-estimate";
-
         std::string source = extractJsonString(req.body, "source");
         if (source.empty()) source = "browser-extension";
+
+        // Derive provider_host from the source field instead of hardcoding
+        std::string provider_host = "unknown";
+        std::string display_name = "Unknown";
+        if (source.find("chatgpt") != std::string::npos || source.find("openai") != std::string::npos) {
+            provider_host = "chatgpt.com";
+            display_name = "ChatGPT";
+            if (model.empty()) model = "chatgpt.com-visible-estimate";
+        } else if (source.find("gemini") != std::string::npos) {
+            provider_host = "gemini.google.com";
+            display_name = "Gemini";
+            if (model.empty()) model = "gemini-visible-estimate";
+        } else if (source.find("claude") != std::string::npos) {
+            provider_host = "claude.ai";
+            display_name = "Claude";
+            if (model.empty()) model = "claude-visible-estimate";
+        } else {
+            if (model.empty()) model = "unknown-estimate";
+        }
 
         std::string page_url = extractJsonString(req.body, "page_url");
         if (page_url.empty()) page_url = "/browser-usage";
 
-        recordUsage(source, model, "chatgpt.com", page_url,
+        recordUsage(source, model, provider_host, page_url,
                     prompt_tokens, completion_tokens, total_tokens);
 
         double energy_wh = (total_tokens / 1000.0) * ENERGY_PER_1K_TOKENS_WH;
@@ -714,7 +749,7 @@ void handleClient(int client_fd) {
         close(client_fd);
 
         std::cout << CLR_GREEN << "  ✓ " << CLR_RESET
-                  << CLR_BOLD << "chatgpt.com estimate" << CLR_RESET << " | "
+                  << CLR_BOLD << display_name << " estimate" << CLR_RESET << " | "
                   << CLR_CYAN << "Tokens: " << total_tokens
                   << CLR_DIM << " (prompt:" << prompt_tokens
                   << " + completion:" << completion_tokens << ")" << CLR_RESET
