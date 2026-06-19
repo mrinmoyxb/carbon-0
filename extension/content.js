@@ -59,16 +59,49 @@
     }
 
     else if (platform === "claude") {
-      // User messages — stable test ID
+      // User messages — stable test ID (set intentionally by Claude's team)
       document.querySelectorAll("[data-testid='user-message']").forEach(node => {
         const text = (node.innerText || "").trim();
         if (text) messages.push({ role: "user", text });
       });
-      // Assistant messages — Claude streams into .font-claude-message containers
-      document.querySelectorAll(".font-claude-message").forEach(node => {
-        const text = (node.innerText || "").trim();
-        if (text) messages.push({ role: "assistant", text });
-      });
+
+      // Assistant messages — try selectors from most to least stable:
+      // 1. Stable test ID  (preferred)
+      // 2. .prose containers inside the response column (structural, not Tailwind-generated)
+      // 3. Original .font-claude-message fallback (breaks when they rebuild CSS)
+      const byTestId = document.querySelectorAll("[data-testid='assistant-message']");
+      const byProse  = document.querySelectorAll(".prose");
+      const byClass  = document.querySelectorAll(".font-claude-message");
+
+      const assistantNodes = byTestId.length > 0 ? byTestId
+                           : byProse.length  > 0 ? byProse
+                           : byClass;
+
+      if (assistantNodes.length > 0) {
+        assistantNodes.forEach(node => {
+          // Skip any node that lives inside a user-message to avoid double-counting quoted text
+          if (node.closest("[data-testid='user-message']")) return;
+          const text = (node.innerText || "").trim();
+          if (text) messages.push({ role: "assistant", text });
+        });
+      } else {
+        // Can't detect response nodes via specific selectors.
+        // Fall back to scraping all visible text in the main content area
+        // and treating it as assistant tokens, tagged as "LLM".
+        const mainContent = document.querySelector("main") || document.body;
+        // Exclude nav, header, footer, and the input box to avoid noise
+        const cloneNode = mainContent.cloneNode(true);
+        ["nav", "header", "footer", "[contenteditable]", "textarea", "button"].forEach(sel => {
+          cloneNode.querySelectorAll(sel).forEach(n => n.remove());
+        });
+        const fallbackText = (cloneNode.innerText || cloneNode.textContent || "").trim();
+        if (fallbackText) {
+          messages.push({ role: "assistant", text: fallbackText });
+        } else {
+          // Absolutely nothing readable — push a minimal marker so the LLM tag still appears
+          messages.push({ role: "assistant", text: "LLM" });
+        }
+      }
     }
 
     return messages.filter(m => m.text.trim().length > 0);

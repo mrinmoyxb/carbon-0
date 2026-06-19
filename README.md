@@ -25,7 +25,7 @@ http://localhost:8888/browser-usage
 5. Select this folder:
 
    ```text
-   /Volumes/D/carbon-0/extension
+   path/to/carbon-0/extension
    ```
 
 6. Open or refresh `https://chatgpt.com`.

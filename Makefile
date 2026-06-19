@@ -41,5 +41,9 @@ run-ui:
 
 run-dev: run-desktop
 
+package-extension: | build
+	zip -r build/carbon-pet-extension.zip extension -x "*.DS_Store"
+
 clean:
 	rm -rf build/*
+
