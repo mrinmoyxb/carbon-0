@@ -109,8 +109,29 @@ void makeWebViewTransparent(NSView *view) {
 }
 
 int main() {
+    // Launch token_proxy helper process if it exists in the same bundle directory
+    NSString *execDir = [[[NSBundle mainBundle] executablePath] stringByDeletingLastPathComponent];
+    NSString *proxyPath = [execDir stringByAppendingPathComponent:@"token_proxy"];
+    NSTask *proxyTask = nil;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:proxyPath]) {
+        proxyTask = [[NSTask alloc] init];
+        [proxyTask setExecutableURL:[NSURL fileURLWithPath:proxyPath]];
+        
+        NSDictionary *env = [[NSProcessInfo processInfo] environment];
+        NSMutableDictionary *newEnv = [env mutableCopy];
+        newEnv[@"CARBON_PROXY_PORT"] = @"8888";
+        [proxyTask setEnvironment:newEnv];
+        
+        NSError *error = nil;
+        if ([proxyTask launchAndReturnError:&error]) {
+            std::cout << "Successfully spawned token_proxy helper process." << std::endl;
+        } else {
+            std::cerr << "Failed to spawn token_proxy: " << [[error localizedDescription] UTF8String] << std::endl;
+        }
+    }
+
     webview::webview w(true, nullptr);
-    w.set_title("Carbon Pet");
+    w.set_title("watt");
     w.set_size(260, 400, WEBVIEW_HINT_FIXED);
 
     NSWindow *window = (NSWindow *)w.window().value();
@@ -138,7 +159,11 @@ int main() {
     });
 
     char absolute_path[PATH_MAX];
-    if (realpath("ui/index.html", absolute_path) != nullptr) {
+    NSString *bundlePath = [[NSBundle mainBundle] pathForResource:@"index" ofType:@"html" inDirectory:@"ui"];
+    if (bundlePath != nil) {
+        std::string url = "file://" + std::string([bundlePath UTF8String]);
+        w.navigate(url);
+    } else if (realpath("ui/index.html", absolute_path) != nullptr) {
         std::string url = "file://" + std::string(absolute_path);
         w.navigate(url);
     } else {
@@ -154,6 +179,11 @@ int main() {
     g_running = false;
     if (trackerThread.joinable()) {
         trackerThread.join();
+    }
+
+    // Terminate token_proxy helper process if it was spawned
+    if (proxyTask && [proxyTask isRunning]) {
+        [proxyTask terminate];
     }
 
     return 0;

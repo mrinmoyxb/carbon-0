@@ -6,13 +6,13 @@ PYTHON ?= python3
 PROXY_PORT ?= 8888
 UI_PORT ?= 8080
 
-all: build/carbon_pet build/power_tracker build/token_proxy
+all: build/watt build/power_tracker build/token_proxy
 
 build:
 	mkdir -p build
 
-build/carbon_pet: src/main.mm | build
-	$(CXX) $(CXXFLAGS) $(FRAMEWORKS) src/main.mm -o build/carbon_pet
+build/watt: src/main.mm | build
+	$(CXX) $(CXXFLAGS) $(FRAMEWORKS) src/main.mm -o build/watt
 
 build/power_tracker: src/power_tracker.cpp | build
 	$(CXX) $(CXXFLAGS) src/power_tracker.cpp -o build/power_tracker
@@ -20,8 +20,8 @@ build/power_tracker: src/power_tracker.cpp | build
 build/token_proxy: src/token_proxy.cpp | build
 	$(CXX) $(CXXFLAGS) $(TOKEN_PROXY_FRAMEWORKS) src/token_proxy.cpp -o build/token_proxy
 
-run-pet: build/carbon_pet
-	./build/carbon_pet
+run-pet: build/watt
+	./build/watt
 
 run-tracker: build/power_tracker
 	./build/power_tracker
@@ -29,12 +29,12 @@ run-tracker: build/power_tracker
 run-proxy: build/token_proxy
 	CARBON_PROXY_PORT=$(PROXY_PORT) ./build/token_proxy
 
-run-desktop: build/carbon_pet build/token_proxy
+run-desktop: build/watt build/token_proxy
 	@echo "Starting Carbon Token Proxy on http://localhost:$(PROXY_PORT)"
 	@echo "Starting desktop Carbon Pet"
 	@trap 'kill 0' INT TERM EXIT; \
 	CARBON_PROXY_PORT=$(PROXY_PORT) ./build/token_proxy & \
-	./build/carbon_pet
+	./build/watt
 
 run-ui:
 	cd ui && $(PYTHON) -m http.server $(UI_PORT) --bind 127.0.0.1
@@ -42,8 +42,9 @@ run-ui:
 run-dev: run-desktop
 
 package-extension: | build
-	zip -r build/carbon-pet-extension.zip extension -x "*.DS_Store"
+	zip -r build/carb-0n-extension.zip extension -x "*.DS_Store"
 
 clean:
 	rm -rf build/*
+
 

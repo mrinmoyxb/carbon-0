@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Carbon Pet for AI Chatbots",
-  "description": "Estimate visible token usage and send CO2 estimates to the local Carbon Pet desktop app for ChatGPT, Gemini and Claude.",
+  "name": "carb-0n for AI Chatbots",
+  "description": "Estimate visible token usage and send CO2 estimates to the local carb-0n desktop app for ChatGPT, Gemini and Claude.",
   "version": "0.2.0",
   "icons": {
     "16": "images/icon-16.png",
